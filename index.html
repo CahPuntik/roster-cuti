@@ -14,12 +14,12 @@
   <meta name="apple-mobile-web-app-title" content="Roster Cuti">
   
   <!-- Manifest -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/manifest.json">
   
   <!-- Icons -->
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
     
     <title>Roster Cuti</title>
     <style>
@@ -1468,6 +1468,15 @@
                 console.log('Service Worker registered', reg);
             }).catch(err => console.error('SW register failed', err));
         }
+
+        // Hide install button if already installed (display-mode) or when appinstalled event fires
+        if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
+            installBtn && (installBtn.style.display = 'none');
+        }
+        window.addEventListener('appinstalled', () => {
+            installBtn && (installBtn.style.display = 'none');
+            deferredPrompt = null;
+        });
 
 
 
