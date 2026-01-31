@@ -19,7 +19,8 @@
   <!-- Icons -->
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
     
     <title>Roster Cuti</title>
     <style>
@@ -684,10 +685,35 @@
                 bottom: 0;
             }
         }
+
+        /* Custom splash overlay */
+        .custom-splash{
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #00384d;
+            z-index: 2000;
+        }
+        .custom-splash img{
+            width: 48vw;
+            max-width: 360px;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        @media (min-width: 768px) {
+            .custom-splash img{ width: 300px; }
+        }
+
     </style>
 </head>
 <body>
-    <div class="background-image" aria-hidden="true"></div>
+    <div id="customSplash" class="custom-splash" aria-hidden="true">
+        <img src="icons/icon-512.png" alt="Roster Cuti">
+    </div>
+    <div class="background-image" aria-hidden="true"></div> 
 
     <div class="container">
         <div class="header-row">
@@ -1478,6 +1504,26 @@
             deferredPrompt = null;
         });
 
+        // Custom splash behavior: show only on first session load
+        (function() {
+            const splash = document.getElementById('customSplash');
+            if (!splash) return;
+            if (sessionStorage.getItem('splashShown')) {
+                splash.remove();
+                return;
+            }
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    splash.style.transition = 'opacity 400ms ease';
+                    splash.style.opacity = '0';
+                    setTimeout(() => {
+                        splash.remove();
+                        sessionStorage.setItem('splashShown', '1');
+                    }, 500);
+                }, 350);
+            });
+        })();
+
 
 
 
@@ -1490,5 +1536,3 @@
     </script>
 </body>
 </html>
-
-
