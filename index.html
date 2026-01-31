@@ -1083,6 +1083,8 @@
         }
 
         function loadCutiFromStorage() {
+            localStorage.removeItem('cutiSheet'); // <-- paksa hapus cache
+            fetchCutiSpreadsheet();
             const cached = localStorage.getItem('cutiSheet');
             if (cached) {
                 cutiSheet = JSON.parse(cached);
@@ -1095,7 +1097,7 @@
 
         async function fetchCutiSpreadsheet() {
             try {
-                const res = await fetch('https://script.google.com/macros/s/AKfycbz-weoOfzgoTDCIATaSXIAqYAfGOOjc3zbCyEE7NnQHTR3xCQ_YcVkGzwOgHT76I3gFRA/exec');
+                const res = await fetch('https://script.google.com/macros/s/AKfycbz-weoOfzgoTDCIATaSXIAqYAfGOOjc3zbCyEE7NnQHTR3xCQ_YcVkGzwOgHT76I3gFRA/exec?t=' + Date.now());
                 const json = await res.json();
                 cutiSheet = json;
                 localStorage.setItem('cutiSheet', JSON.stringify(json));

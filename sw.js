@@ -1,4 +1,4 @@
-const CACHE_NAME = "roster-cuti-v2";
+const CACHE_NAME = "roster-cuti-v3"; // ⬅️ Naikkan versi kalau update SW
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
@@ -8,19 +8,25 @@ const FILES_TO_CACHE = [
   "/icons/efek2.png",
 ];
 
+// Install: cache app shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE)),
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(FILES_TO_CACHE);
+    }),
   );
   self.skipWaiting();
 });
 
+// Activate: hapus cache lama
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((k) => {
-          if (k !== CACHE_NAME) return caches.delete(k);
+          if (k !== CACHE_NAME) {
+            return caches.delete(k);
+          }
         }),
       ),
     ),
@@ -28,45 +34,54 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Fetch handler
 self.addEventListener("fetch", (event) => {
-  // Simple cache-first strategy for app shell
   if (event.request.method !== "GET") return;
 
-  // Network-first for API requests to ensure fresh data
-  if (event.request.url.includes('script.google.com')) {
+  const url = new URL(event.request.url);
+
+  // 🔴 JANGAN cache API Google Apps Script (biar data selalu fresh)
+  if (url.hostname.includes("script.google.com")) {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Optionally cache the response for offline use, but not for freshness
-          return response;
-        })
-        .catch(() => caches.match(event.request) || caches.match('/index.html'))
+      fetch(event.request).catch(() => {
+        // Kalau offline, balikin JSON kosong (atau bisa kamu ganti sesuai kebutuhan)
+        return new Response(JSON.stringify([]), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
     );
     return;
   }
 
+  // 🟢 Cache-first untuk file aplikasi (HTML, icon, dll)
   event.respondWith(
-    caches.match(event.request).then(
-      (resp) =>
-        resp ||
-        fetch(event.request)
-          .then((r) => {
-            // Put a copy in cache for future requests
-            return caches.open(CACHE_NAME).then((cache) => {
-              try {
-                cache.put(event.request, r.clone());
-              } catch (e) {
-                /* ignore */
-              }
-              return r;
-            });
-          })
-          .catch(() => caches.match("/index.html")),
-    ),
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(event.request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            try {
+              cache.put(event.request, networkResponse.clone());
+            } catch (e) {
+              // abaikan error cache (misal cross-origin)
+            }
+            return networkResponse;
+          });
+        })
+        .catch(() => {
+          // Fallback kalau offline dan request HTML
+          if (event.request.mode === "navigate") {
+            return caches.match("/index.html");
+          }
+        });
+    }),
   );
 });
 
-// Push / Notification handlers (keep existing behavior if using push)
+// Push Notification
 self.addEventListener("push", function (event) {
   let data = {};
   try {
@@ -77,6 +92,7 @@ self.addEventListener("push", function (event) {
       body: event.data && event.data.text ? event.data.text() : "",
     };
   }
+
   const title = data.title || "Pengingat Cuti";
   const options = {
     body: data.body || "",
@@ -84,9 +100,11 @@ self.addEventListener("push", function (event) {
     badge: data.badge || "icons/icon-192.png",
     data: data,
   };
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+// Klik notifikasi
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/";
@@ -103,5 +121,5 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 self.addEventListener("notificationclose", (event) => {
-  // Optional: handle close
+  // optional
 });
