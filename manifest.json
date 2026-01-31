@@ -1,8 +1,8 @@
 {
   "name": "Roster Cuti",
   "short_name": "Roster",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#00384d",
   "theme_color": "#00384d",
@@ -11,3 +11,4 @@
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
+
