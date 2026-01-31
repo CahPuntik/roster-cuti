@@ -1126,7 +1126,7 @@
                     <div class="year-text">${year}</div>
                     <div class="holiday-info">
                         ${getHolidaysByMonth(currentMonth).map(item => 
-                            `<div class="holiday-text ${item.type}">${item.type === 'libur' ? '•' : ''} ${item.day} ${item.name}</div>`
+                            `<div class="holiday-text ${item.type}">${item.type === 'libur' || item.type === 'nasional' ? '•' : ''} ${item.day} ${item.name}</div>`
                         ).join('')}
                     </div>
                 </div>
@@ -1490,4 +1490,5 @@
     </script>
 </body>
 </html>
+
 
