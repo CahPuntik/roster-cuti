@@ -1,6 +1,6 @@
 {
   "name": "Roster Cuti",
-  "short_name": "Roster",
+  "short_name": "Roster Cuti",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -11,4 +11,5 @@
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
+
 
