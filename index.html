@@ -559,6 +559,17 @@
             justify-content: center;
         }
 
+        .cuti-status {
+            margin: 10px 15px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #e5fff0;
+            color: #065f46;
+            font-weight: 700;
+            font-size: 14px;
+            border: 2px dashed #4caf50;
+        }
+
         @media (max-width: 480px) {
             .action-btn {
                 padding: 6px 8px;
@@ -702,6 +713,9 @@
             </div>
             <div class="calendar-container" id="calendarContainer">
                 <!-- Calendar content will be populated by JS -->
+            </div>
+            <div id="cutiStatusBox" class="cuti-status">
+            Sedang Cuti: -
             </div>
         </div>
 
@@ -1271,6 +1285,7 @@
                     </div>
                 `).join('')}
             `;
+            renderCutiStatusHariIni();
         }
 
         function onPressDate(dateStr) {
@@ -1402,6 +1417,24 @@
                 return item.instruktur?.toLowerCase() === selectedInstruktur.toLowerCase();
             });
 
+            const sortedCuti = [...filtered].sort((a, b) => {
+                const aPast = isCutiSudahLewat(a);
+                const bPast = isCutiSudahLewat(b);
+
+                // Yang belum lewat di atas, yang sudah lewat di bawah
+                if (aPast !== bPast) {
+                    return aPast ? 1 : -1;
+                }
+
+                // Kalau sama-sama (dua-duanya lewat atau dua-duanya belum),
+                // urutkan berdasarkan tanggal mulai
+                const aDate = parseSpreadsheetDate(a.tanggal_mulai);
+                const bDate = parseSpreadsheetDate(b.tanggal_mulai);
+
+                if (!aDate || !bDate) return 0;
+                return aDate - bDate;
+            });
+
             if (filtered.length === 0) {
                 cutiList.innerHTML = `<div class="empty-text">Tidak ada data cuti (Total: ${cutiSheet.length})</div>`;
                 return;
@@ -1418,7 +1451,7 @@
                 }
             });
 
-            cutiList.innerHTML = filtered.map(item => {
+            cutiList.innerHTML = sortedCuti.map(item => {
                 const startDate = parseSpreadsheetDate(item.tanggal_mulai);
                 if (!startDate) return '';
                 const duration = getCutiDuration(item.instruktur);
@@ -1479,6 +1512,84 @@
             installBtn && (installBtn.style.display = 'none');
             deferredPrompt = null;
         });
+
+        function renderCutiStatusHariIni() {
+            const box = document.getElementById("cutiStatusBox");
+            if (!box) return;
+
+            if (loadingSheet || !Array.isArray(cutiSheet)) {
+                box.textContent = "Sedang Cuti: -";
+                return;
+            }
+
+            const today = new Date();
+            const todayKey = getLocalISODate(today);
+
+            const sedangCutiSet = new Set();
+
+            cutiSheet.forEach(item => {
+                const start = parseSpreadsheetDate(item.tanggal_mulai);
+                if (!start || !item.instruktur) return;
+
+                const dur = getCutiDuration(item.instruktur);
+                for (let i = 0; i < dur; i++) {
+                    const d = new Date(start);
+                    d.setDate(start.getDate() + i);
+                    if (getLocalISODate(d) === todayKey) {
+                        sedangCutiSet.add(item.instruktur);
+                    }
+                }
+            });
+
+            if (sedangCutiSet.size === 0) {
+                box.textContent = "Sedang Cuti: -";
+            } else {
+                const singkatanList = Array.from(sedangCutiSet).map(nama => singkatNama(nama));
+                box.textContent = "Sedang Cuti: " + singkatanList.join(", ");
+            }
+        }
+
+        function singkatNama(nama) {
+            if (!nama) return "";
+
+            const clean = nama.trim().toUpperCase();
+
+            // 🔴 Pengecualian khusus
+            if (clean === "IRWANUDDIN") {
+                return "IRN";
+            }
+
+            const parts = clean.split(/\s+/);
+
+            // Jika hanya 1 kata → ambil 3 huruf pertama
+            if (parts.length === 1) {
+                return parts[0].substring(0, 3);
+            }
+
+            // Jika 2 kata atau lebih:
+            const kata1 = parts[0];
+            const kata2 = parts[1];
+
+            const huruf1 = kata1.substring(0, 2);
+            const huruf2 = kata2.substring(0, 1);
+
+            return huruf1 + huruf2;
+        }
+
+        function isCutiSudahLewat(item) {
+            const start = parseSpreadsheetDate(item.tanggal_mulai);
+            if (!start) return true;
+
+            const dur = getCutiDuration(item.instruktur);
+            const end = new Date(start);
+            end.setDate(start.getDate() + dur - 1);
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            return end < today; // true kalau sudah lewat
+        }
+
     </script>
 </body>
 </html>
