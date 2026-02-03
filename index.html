@@ -1117,6 +1117,7 @@
                 localStorage.setItem('cutiSheet', JSON.stringify(json));
                 loadingSheet = false;
                 renderCutiList();
+                renderCalendar();
             } catch (err) {
                 console.error('Fetch error:', err);
                 loadingSheet = false;
