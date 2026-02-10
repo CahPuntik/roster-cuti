@@ -1,4 +1,4 @@
-const CACHE_NAME = "roster-cuti-v3"; // ⬅️ Naikkan versi kalau update SW
+const CACHE_NAME = "roster-cuti-v4"; // ⬅️ Naikkan versi kalau update SW
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
@@ -53,7 +53,26 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 🟢 Cache-first untuk file aplikasi (HTML, icon, dll)
+  // � Network-first untuk HTML (development mode - lihat perubahan langsung)
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Cache new version jika berhasil fetch
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+          });
+          return response;
+        })
+        .catch(() => {
+          // Fallback ke cache kalau offline
+          return caches.match(event.request);
+        }),
+    );
+    return;
+  }
+
+  // 🟢 Cache-first untuk file statis (icon, dll)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -72,10 +91,8 @@ self.addEventListener("fetch", (event) => {
           });
         })
         .catch(() => {
-          // Fallback kalau offline dan request HTML
-          if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
-          }
+          // Fallback kalau offline
+          return caches.match("/");
         });
     }),
   );
