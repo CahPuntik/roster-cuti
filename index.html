@@ -642,7 +642,7 @@
           padding: 10px 12px;
           border-radius: 8px;
           cursor: pointer;
-          font-size: 10px;
+          font-size: 14px;
           color: #00384d;
         }
         
@@ -668,54 +668,54 @@
           display: flex;
         }
 
-        #circularMenu {
-          position: relative;
-          width: 280px;
-          height: 280px;
-          border-radius: 50%;
-          background: #d3ddef;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
+                #circularMenu {
+                    position: relative;
+                    width: 340px;
+                    height: 340px;
+                    border-radius: 50%;
+                    background: #d3ddef;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
 
-        #circularMenu::before {
-          content: '';
-          position: absolute;
-          width: 30px;
-          height: 30px;
-          background: linear-gradient(135deg, #3A95C9, #2e687b);
-          border-radius: 50%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          color: white;
-          font-weight: bold;
-          font-size: 10px;
-          z-index: 10;
-        }
+                #circularMenu::before {
+                    content: '';
+                    position: absolute;
+                    width: 40px;
+                    height: 40px;
+                    background: linear-gradient(135deg, #3A95C9, #2e687b);
+                    border-radius: 50%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 12px;
+                    z-index: 10;
+                }
 
-        .circular-item {
-          position: absolute;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3A95C9, #2e687b);
-          color: white;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: pointer;
-          font-size: 9px;
-          font-weight: 600;
-          text-align: center;
-          padding: 4px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-          transition: all 0.3s ease;
-          user-select: none;
-        }
+                .circular-item {
+                    position: absolute;
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #3A95C9, #2e687b);
+                    color: white;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    cursor: pointer;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-align: center;
+                    padding: 6px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    transition: all 0.3s ease;
+                    user-select: none;
+                }
 
         .circular-item:hover {
           transform: scale(1.15);
@@ -1924,7 +1924,8 @@
 
         // --- Circular Menu for Evaluasi ---
         const circularMenuItems = ['HDT', 'WA', 'TRAILER', 'MOTOR GRADER', 'EKSAVATOR', 'BULLDOZER', 'DT SUPPORT', 'DRILLING'];
-        const circularMenuRadius = 110;
+        // fallback radius (will be computed dynamically)
+        let circularMenuRadius = 140;
 
         function showCircularMenu() {
           const floatingBtn = document.getElementById("floatingMenuBtn");
@@ -1939,23 +1940,28 @@
           // Tampilkan overlay
           overlay.classList.add('show');
 
-          // Generate circular items
-          circularMenu.innerHTML = '';
-          circularMenuItems.forEach((item, index) => {
-            const angle = (index * 360 / circularMenuItems.length) - 90;
-            const radian = angle * Math.PI / 180;
-            const x = circularMenuRadius * Math.cos(radian);
-            const y = circularMenuRadius * Math.sin(radian);
+                    // Generate circular items (compute radius based on container and item size)
+                    circularMenu.innerHTML = '';
+                    const itemSize = 70;
+                    const center = circularMenu.offsetWidth / 2;
+                    // compute safe radius so items stay inside the circle (with small padding)
+                    const safeRadius = Math.max(0, center - itemSize / 2 - 8);
+                    circularMenuRadius = safeRadius;
+                    circularMenuItems.forEach((item, index) => {
+                        const angle = (index * 360 / circularMenuItems.length) - 90;
+                        const radian = angle * Math.PI / 180;
+                        const x = circularMenuRadius * Math.cos(radian);
+                        const y = circularMenuRadius * Math.sin(radian);
 
-            const itemEl = document.createElement('div');
-            itemEl.className = 'circular-item';
-            itemEl.textContent = item;
-            itemEl.style.left = (140 + x - 25) + 'px';
-            itemEl.style.top = (140 + y - 25) + 'px';
-            itemEl.onclick = () => handleCircularItemClick(item);
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'circular-item';
+                        itemEl.textContent = item;
+                        itemEl.style.left = (center + x - itemSize / 2) + 'px';
+                        itemEl.style.top = (center + y - itemSize / 2) + 'px';
+                        itemEl.onclick = () => handleCircularItemClick(item);
 
-            circularMenu.appendChild(itemEl);
-          });
+                        circularMenu.appendChild(itemEl);
+                    });
         }
 
         function closeCircularMenu() {
