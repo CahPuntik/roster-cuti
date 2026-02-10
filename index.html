@@ -569,6 +569,76 @@
             font-size: 14px;
             border: 2px dashed #4caf50;
         }
+        
+        .cuti-card.past {
+            background-color: #e5e7eb;   /* abu-abu */
+            color: #6b7280;
+            opacity: 0.8;
+        }
+        
+        .cuti-card.past .cuti-nama {
+            color: #4b5563;
+        }
+        
+        .cuti-card.past .periode-text {
+            color: #6b7280;
+        }
+        
+        #floatingMenuBtn {
+          position: fixed;
+          right: 16px;
+          bottom: 100px;
+          z-index: 9999;
+        
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+        
+          border: 1px solid rgba(255,255,255,0.5);
+          background: rgba(255,255,255,0.25);
+          backdrop-filter: blur(6px);
+        
+          color: #00384d;
+          font-size: 24px;
+          font-weight: bold;
+        
+          cursor: grab;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        #floatingMenuBtn:active {
+          cursor: grabbing;
+        }
+        
+        /* Panel menu */
+        #floatingMenuPanel {
+          position: fixed;
+          z-index: 9998;
+          min-width: 160px;
+        
+          background: rgba(255,255,255,0.85);
+          backdrop-filter: blur(8px);
+          border-radius: 12px;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        
+          padding: 8px;
+        }
+        
+        #floatingMenuPanel.hidden {
+          display: none;
+        }
+        
+        #floatingMenuPanel .menu-item {
+          padding: 10px 12px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          color: #00384d;
+        }
+        
+        #floatingMenuPanel .menu-item:hover {
+          background: rgba(0,56,77,0.1);
+        }
 
         @media (max-width: 480px) {
             .action-btn {
@@ -730,6 +800,13 @@
         <h2 class="section-title">Jadwal Cuti</h2>
         <div class="cuti-list" id="cutiList">
             <div class="loading-text">Memuat data cuti...</div>
+        </div>
+        <button id="floatingMenuBtn">></button>
+
+        <div id="floatingMenuPanel" class="hidden">
+          <div class="menu-item" onclick="openProsedur()">📄 Prosedur</div>
+          <div class="menu-item" onclick="openHM()">🛠️ HM Input</div>
+          <div class="menu-item" onclick="openSlipGaji()">💳 Slip Gaji</div>
         </div>
     </div>
 
@@ -1475,6 +1552,17 @@
                     </div>
                 `;
             }).join('');
+            // Setelah cutiList.innerHTML terisi
+            const cards = cutiList.querySelectorAll('.cuti-card');
+            
+            cards.forEach((card, index) => {
+                const item = sortedCuti[index]; // sesuaikan dengan data yang dirender
+                if (isCutiSudahLewat(item)) {
+                    card.classList.add('past');
+                } else {
+                    card.classList.remove('past');
+                }
+            });
         }
 
         // --- PWA: install prompt & SW registration ---
@@ -1602,9 +1690,88 @@
 
             return end < today; // true kalau sudah lewat
         }
+        
+        const floatingBtn = document.getElementById("floatingMenuBtn");
+        const menuPanel = document.getElementById("floatingMenuPanel");
+        
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+        
+        // --- Drag ---
+        floatingBtn.addEventListener("mousedown", startDrag);
+        floatingBtn.addEventListener("touchstart", startDrag, { passive: false });
+        
+        function startDrag(e) {
+          isDragging = true;
+        
+          const rect = floatingBtn.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+          offsetX = clientX - rect.left;
+          offsetY = clientY - rect.top;
+        
+          e.preventDefault();
+        }
+        
+        document.addEventListener("mousemove", onDrag);
+        document.addEventListener("touchmove", onDrag, { passive: false });
+        
+        function onDrag(e) {
+          if (!isDragging) return;
+        
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+          floatingBtn.style.left = (clientX - offsetX) + "px";
+          floatingBtn.style.top  = (clientY - offsetY) + "px";
+          floatingBtn.style.right = "auto";
+          floatingBtn.style.bottom = "auto";
+        
+          // ikut pindahkan menu kalau lagi terbuka
+          if (!menuPanel.classList.contains("hidden")) {
+            positionMenu();
+          }
+        }
+        
+        document.addEventListener("mouseup", stopDrag);
+        document.addEventListener("touchend", stopDrag);
+        
+        function stopDrag() {
+          isDragging = false;
+        }
+        
+        // --- Toggle Menu ---
+        floatingBtn.addEventListener("click", () => {
+          menuPanel.classList.toggle("hidden");
+          if (!menuPanel.classList.contains("hidden")) {
+            positionMenu();
+          }
+        });
+        
+        function positionMenu() {
+          const rect = floatingBtn.getBoundingClientRect();
+          menuPanel.style.left = rect.left + "px";
+          menuPanel.style.top = (rect.top - menuPanel.offsetHeight - 8) + "px";
+        }
+        
+        // --- Aksi menu (contoh) ---
+        function openProsedur() {
+          alert("Buka menu Prosedur");
+          // window.location.href = "prosedur.html";
+        }
+        
+        function openHM() {
+          alert("Buka menu HM Input");
+          // window.location.href = "hm-input.html";
+        }
+        
+        function openSlipGaji() {
+          alert("Buka menu Slip Gaji");
+          // window.location.href = "slip-gaji.html";
+        }
 
     </script>
 </body>
-
 </html>
-
