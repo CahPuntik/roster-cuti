@@ -595,7 +595,7 @@
           border-radius: 50%;
         
           border: 1px solid rgba(255,255,255,0.5);
-          background: rgba(255,255,255,0.25);
+          background: transparent;
           backdrop-filter: blur(6px);
         
           color: #00384d;
@@ -609,14 +609,24 @@
         #floatingMenuBtn:active {
           cursor: grabbing;
         }
+
+        /* Animasi rotasi button saat menu aktif */
+        #floatingMenuBtn.active {
+          transform: rotate(180deg);
+          transition: transform 0.3s ease;
+        }
+
+        #floatingMenuBtn {
+          transition: transform 0.3s ease;
+        }
         
         /* Panel menu */
         #floatingMenuPanel {
           position: fixed;
           z-index: 9998;
-          min-width: 160px;
+          min-width: 80px;
         
-          background: rgba(255,255,255,0.85);
+          background: transparent;
           backdrop-filter: blur(8px);
           border-radius: 12px;
           box-shadow: 0 6px 16px rgba(0,0,0,0.2);
@@ -632,12 +642,110 @@
           padding: 10px 12px;
           border-radius: 8px;
           cursor: pointer;
-          font-size: 14px;
+          font-size: 10px;
           color: #00384d;
         }
         
         #floatingMenuPanel .menu-item:hover {
           background: rgba(0,56,77,0.1);
+        }
+
+        /* Circular Menu */
+        #circularMenuOverlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.6);
+          display: none;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+
+        #circularMenuOverlay.show {
+          display: flex;
+        }
+
+        #circularMenu {
+          position: relative;
+          width: 280px;
+          height: 280px;
+          border-radius: 50%;
+          background: #d3ddef;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #circularMenu::before {
+          content: '';
+          position: absolute;
+          width: 30px;
+          height: 30px;
+          background: linear-gradient(135deg, #3A95C9, #2e687b);
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: white;
+          font-weight: bold;
+          font-size: 10px;
+          z-index: 10;
+        }
+
+        .circular-item {
+          position: absolute;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3A95C9, #2e687b);
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          cursor: pointer;
+          font-size: 9px;
+          font-weight: 600;
+          text-align: center;
+          padding: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          transition: all 0.3s ease;
+          user-select: none;
+        }
+
+        .circular-item:hover {
+          transform: scale(1.15);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+          background: linear-gradient(135deg, #4da6d6, #357a8a);
+        }
+
+        .circular-close {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.9);
+          color: #3A95C9;
+          border: none;
+          cursor: pointer;
+          font-size: 24px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 10000;
+          transition: all 0.3s ease;
+        }
+
+        .circular-close:hover {
+          background: #3A95C9;
+          color: white;
+          transform: rotate(90deg);
         }
 
         @media (max-width: 480px) {
@@ -804,9 +912,16 @@
         <button id="floatingMenuBtn">></button>
 
         <div id="floatingMenuPanel" class="hidden">
-          <div class="menu-item" onclick="openProsedur()">📄 Prosedur</div>
-          <div class="menu-item" onclick="openHM()">🛠️ HM Input</div>
-          <div class="menu-item" onclick="openSlipGaji()">💳 Slip Gaji</div>
+          <div class="menu-item" onclick="openProsedur()">Prosedur</div>
+          <div class="menu-item" onclick="openEvaluasi()">Evaluasi</div>
+          <div class="menu-item" onclick="openNonteknis()">Non Teknis</div>
+          <div class="menu-item" onclick="openSlipGaji()">Fiori</div>
+        </div>
+
+        <!-- Circular Menu for Evaluasi -->
+        <div id="circularMenuOverlay">
+          <button class="circular-close" onclick="closeCircularMenu()">✕</button>
+          <div id="circularMenu"></div>
         </div>
     </div>
 
@@ -1659,6 +1774,9 @@
             if (clean === "MUHAMMAD ALIF FAHREZA") {
                 return "MAL";
             }
+            if (clean === "DARYANTO") {
+                return "DAR(SH)"; // supaya beda dengan Darto
+            }
 
             const parts = clean.split(/\s+/);
 
@@ -1697,22 +1815,27 @@
         let isDragging = false;
         let offsetX = 0;
         let offsetY = 0;
+        let startX = 0;
+        let startY = 0;
+        let hasMoved = false;
+        const dragThreshold = 10; // pixel
         
         // --- Drag ---
         floatingBtn.addEventListener("mousedown", startDrag);
-        floatingBtn.addEventListener("touchstart", startDrag, { passive: false });
+        floatingBtn.addEventListener("touchstart", startDrag, { passive: true });
         
         function startDrag(e) {
-          isDragging = true;
-        
           const rect = floatingBtn.getBoundingClientRect();
           const clientX = e.touches ? e.touches[0].clientX : e.clientX;
           const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         
           offsetX = clientX - rect.left;
           offsetY = clientY - rect.top;
-        
-          e.preventDefault();
+          
+          startX = clientX;
+          startY = clientY;
+          hasMoved = false;
+          isDragging = true;
         }
         
         document.addEventListener("mousemove", onDrag);
@@ -1723,15 +1846,28 @@
         
           const clientX = e.touches ? e.touches[0].clientX : e.clientX;
           const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        
-          floatingBtn.style.left = (clientX - offsetX) + "px";
-          floatingBtn.style.top  = (clientY - offsetY) + "px";
-          floatingBtn.style.right = "auto";
-          floatingBtn.style.bottom = "auto";
-        
-          // ikut pindahkan menu kalau lagi terbuka
-          if (!menuPanel.classList.contains("hidden")) {
-            positionMenu();
+          
+          const dx = Math.abs(clientX - startX);
+          const dy = Math.abs(clientY - startY);
+          
+          // Hanya apply drag jika sudah gerak lebih dari threshold
+          if (dx > dragThreshold || dy > dragThreshold) {
+            hasMoved = true;
+            
+            // Prevent scroll saat drag
+            if (e.touches) {
+              e.preventDefault();
+            }
+            
+            floatingBtn.style.left = (clientX - offsetX) + "px";
+            floatingBtn.style.top  = (clientY - offsetY) + "px";
+            floatingBtn.style.right = "auto";
+            floatingBtn.style.bottom = "auto";
+          
+            // ikut pindahkan menu kalau lagi terbuka
+            if (!menuPanel.classList.contains("hidden")) {
+              positionMenu();
+            }
           }
         }
         
@@ -1743,8 +1879,15 @@
         }
         
         // --- Toggle Menu ---
-        floatingBtn.addEventListener("click", () => {
+        floatingBtn.addEventListener("click", (e) => {
+          // Jika user baru saja drag, jangan toggle menu
+          if (hasMoved) {
+            hasMoved = false;
+            return;
+          }
+          
           menuPanel.classList.toggle("hidden");
+          floatingBtn.classList.toggle("active");
           if (!menuPanel.classList.contains("hidden")) {
             positionMenu();
           }
@@ -1752,24 +1895,100 @@
         
         function positionMenu() {
           const rect = floatingBtn.getBoundingClientRect();
-          menuPanel.style.left = rect.left + "px";
-          menuPanel.style.top = (rect.top - menuPanel.offsetHeight - 8) + "px";
+          menuPanel.style.left = (rect.left - menuPanel.offsetWidth - 8) + "px";
+          menuPanel.style.top = (rect.top + (rect.height - menuPanel.offsetHeight) / 2) + "px";
         }
         
         // --- Aksi menu (contoh) ---
         function openProsedur() {
-          alert("Buka menu Prosedur");
-          // window.location.href = "prosedur.html";
+        window.open(
+            "https://drive.google.com/drive/folders/14t_-6vYTtfaXKae_dO3cdVAddmh09go6?usp=drive_link",
+            "_blank"
+        );
         }
         
-        function openHM() {
-          alert("Buka menu HM Input");
-          // window.location.href = "hm-input.html";
+        function openEvaluasi() {
+          showCircularMenu();
+        }
+
+        function openNonTeknis() {
+        window.open("https://forms.gle/xZArQCtDA25bAmpS7", "_blank");
         }
         
         function openSlipGaji() {
-          alert("Buka menu Slip Gaji");
-          // window.location.href = "slip-gaji.html";
+        window.open(
+            "https://erp-saptaindra.msappproxy.net/fiori",
+            "_blank"
+        );
+        }
+
+        // --- Circular Menu for Evaluasi ---
+        const circularMenuItems = ['HDT', 'WA', 'TRAILER', 'MOTOR GRADER', 'EKSAVATOR', 'BULLDOZER', 'DT SUPPORT', 'DRILLING'];
+        const circularMenuRadius = 110;
+
+        function showCircularMenu() {
+          const floatingBtn = document.getElementById("floatingMenuBtn");
+          const menuPanel = document.getElementById("floatingMenuPanel");
+          const overlay = document.getElementById("circularMenuOverlay");
+          const circularMenu = document.getElementById("circularMenu");
+
+          // Sembunyikan floating button dan menu
+          floatingBtn.style.display = 'none';
+          menuPanel.classList.add('hidden');
+
+          // Tampilkan overlay
+          overlay.classList.add('show');
+
+          // Generate circular items
+          circularMenu.innerHTML = '';
+          circularMenuItems.forEach((item, index) => {
+            const angle = (index * 360 / circularMenuItems.length) - 90;
+            const radian = angle * Math.PI / 180;
+            const x = circularMenuRadius * Math.cos(radian);
+            const y = circularMenuRadius * Math.sin(radian);
+
+            const itemEl = document.createElement('div');
+            itemEl.className = 'circular-item';
+            itemEl.textContent = item;
+            itemEl.style.left = (140 + x - 25) + 'px';
+            itemEl.style.top = (140 + y - 25) + 'px';
+            itemEl.onclick = () => handleCircularItemClick(item);
+
+            circularMenu.appendChild(itemEl);
+          });
+        }
+
+        function closeCircularMenu() {
+          const floatingBtn = document.getElementById("floatingMenuBtn");
+          const overlay = document.getElementById("circularMenuOverlay");
+
+          // Tampilkan floating button lagi
+          floatingBtn.style.display = 'block';
+
+          // Sembunyikan overlay
+          overlay.classList.remove('show');
+        }
+
+        function handleCircularItemClick(item) {
+          // Mapping URL untuk setiap item
+          const itemUrls = {
+            'HDT': 'https://docs.google.com/spreadsheets/d/1-ZWt7BT-EqEcBjxNmiFqX295cBNgfyw-1XoDV8SGcmA/edit?usp=sharing',
+            'WA': 'https://docs.google.com/spreadsheets/d/1E0i4p4_ULOHBXXBUZiWAsZ9LSRLRP4d1nKuR1xZR7JM/edit?usp=sharing',
+            'TRAILER': 'https://docs.google.com/spreadsheets/d/1XdV1SRYq9RrnonDXTLYcopbnMcEMJah7iOVJArAMKU0/edit?usp=sharing',
+            'MOTOR GRADER': 'https://docs.google.com/spreadsheets/d/1amFeDSoAgWVLVYlLVAQJaJEXO3ImAfq42QFBTo5HEm0/edit?usp=sharing',
+            'EKSAVATOR': 'https://docs.google.com/spreadsheets/d/15qJum6TnNJw5toSQM_H4JQaJLv56N4Pb6I8SF_8knL0/edit?usp=sharing',
+            'BULLDOZER': 'https://docs.google.com/spreadsheets/d/129PDBrNIcKO1x4bqTqEaoBFEm6tqSxscsm1HaNare7w/edit?usp=sharing',
+            'DT SUPPORT': 'https://docs.google.com/spreadsheets/d/11rj-RoHZg2Gyzdy8rz3Myo9sPb7wWPE1LhHtEEVpgqw/edit?usp=sharing',
+            'DRILLING': 'https://docs.google.com/spreadsheets/d/1OkHvSpocYCgKLmmt3PDh4ma2X8DYt2O47DmsJ4w2m_s/edit?usp=sharing'
+          };
+
+          const url = itemUrls[item];
+          if (url) {
+            window.open(url, '_blank');
+          } else {
+            alert("Anda memilih: " + item);
+          }
+          closeCircularMenu();
         }
 
     </script>
