@@ -912,10 +912,11 @@
         <button id="floatingMenuBtn">></button>
 
         <div id="floatingMenuPanel" class="hidden">
-          <div class="menu-item" onclick="openProsedur()">Prosedur</div>
-          <div class="menu-item" onclick="openEvaluasi()">Evaluasi</div>
-          <div class="menu-item" onclick="openNonteknis()">Non Teknis</div>
-          <div class="menu-item" onclick="openSlipGaji()">Fiori</div>
+            <div class="menu-item" onclick="openProsedur()">Prosedur</div>
+            <div class="menu-item" onclick="openEvaluasi()">Evaluasi</div>
+            <div class="menu-item" onclick="openNonteknis()">Non Teknis</div>
+            <div class="menu-item" onclick="openSlipGaji()">Fiori</div>
+            <div class="menu-item" onclick="openPendamping()">Pendampingan</div>
         </div>
 
         <!-- Circular Menu for Evaluasi -->
@@ -1918,6 +1919,12 @@
         function openSlipGaji() {
         window.open(
             "https://erp-saptaindra.msappproxy.net/fiori",
+            "_blank"
+        );
+
+        function openPendamping() {
+        window.open(
+            " https://cahpuntik.github.io/laporan-pendampingan-senior/",
             "_blank"
         );
         }
